@@ -5,6 +5,8 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
@@ -37,6 +39,9 @@ public class SearchFragment extends Fragment {
     private TextView textViewInfo;
     private TrackAdapter trackAdapter;
     private ApiService apiService;
+    private LinearLayout layoutError;
+    private Button buttonRetry;
+    private String lastSearchQuery = "";
 
     private final List<LastFmModels.TrackDetail> completeTrackList = new ArrayList<>();
     private int totalTracksToFetch = 0;
@@ -56,6 +61,8 @@ public class SearchFragment extends Fragment {
         recyclerView = view.findViewById(R.id.recyclerViewSearch);
         progressBar = view.findViewById(R.id.progressBarSearch);
         textViewInfo = view.findViewById(R.id.textViewInfo);
+        layoutError = view.findViewById(R.id.layoutError);
+        buttonRetry = view.findViewById(R.id.buttonRetry);
 
         // Setup RecyclerView & Adapter
         trackAdapter = new TrackAdapter();
@@ -64,6 +71,13 @@ public class SearchFragment extends Fragment {
 
         // Inisialisasi API Service
         apiService = RetrofitClient.getClient().create(ApiService.class);
+
+        // Setup listener untuk tombol Retry
+        buttonRetry.setOnClickListener(v -> {
+            if (!lastSearchQuery.isEmpty()) {
+                performSearch(lastSearchQuery);
+            }
+        });
 
         // Setup Listener untuk SearchView
         setupSearchView();
@@ -89,20 +103,26 @@ public class SearchFragment extends Fragment {
     }
 
     private void performSearch(String query) {
+        // Simpan query terakhir untuk retry
+        lastSearchQuery = query;
+
         // Tampilkan loading, sembunyikan yang lain
         progressBar.setVisibility(View.VISIBLE);
         recyclerView.setVisibility(View.GONE);
         textViewInfo.setVisibility(View.GONE);
+        layoutError.setVisibility(View.GONE);
         completeTrackList.clear();
-        trackAdapter.setTracks(new ArrayList<>(), "search"); // Kosongkan adapter
+        trackAdapter.setTracks(new ArrayList<>(), "search");
 
         Log.d(TAG, "Mencari lagu: " + query);
 
-        Call<LastFmModels.SearchResultsResponse> call = apiService.searchTracks(query, API_KEY, 20); // Ambil 20 hasil
+        Call<LastFmModels.SearchResultsResponse> call = apiService.searchTracks(query, API_KEY, 20);
 
         call.enqueue(new Callback<LastFmModels.SearchResultsResponse>() {
             @Override
             public void onResponse(Call<LastFmModels.SearchResultsResponse> call, Response<LastFmModels.SearchResultsResponse> response) {
+                if (!isAdded()) return;
+
                 if (response.isSuccessful() && response.body() != null) {
                     List<LastFmModels.TrackSimpleSearch> searchResults = response.body().getResults().getTrackMatches().getTrackList();
                     totalTracksToFetch = searchResults.size();
@@ -117,29 +137,23 @@ public class SearchFragment extends Fragment {
 
                     // Ambil detail untuk setiap hasil pencarian
                     for (LastFmModels.TrackSimpleSearch track : searchResults) {
-                        // KITA BISA GUNAKAN KEMBALI METODE fetchTrackDetails!
                         fetchTrackDetails(track.getArtist(), track.getName());
                     }
                 } else {
-                    progressBar.setVisibility(View.GONE);
-                    textViewInfo.setText("Error fetching data.");
-                    textViewInfo.setVisibility(View.VISIBLE);
                     Log.e(TAG, "Search failed. Code: " + response.code());
+                    showErrorView();
                 }
             }
 
             @Override
             public void onFailure(Call<LastFmModels.SearchResultsResponse> call, Throwable t) {
-                progressBar.setVisibility(View.GONE);
-                textViewInfo.setText("Connection error.");
-                textViewInfo.setVisibility(View.VISIBLE);
+                if (!isAdded()) return;
                 Log.e(TAG, "Connection failure: " + t.getMessage());
+                showErrorView();
             }
         });
     }
 
-    // KEDUA METODE DI BAWAH INI SAMA PERSIS DENGAN YANG ADA DI TRENDINGFRAGMENT
-    // Ini menunjukkan potensi untuk refactoring (membuat kelas dasar) di masa depan
     private void fetchTrackDetails(String artistName, String trackName) {
         Call<LastFmModels.TrackInfoResponse> call = apiService.getTrackInfo(API_KEY, artistName, trackName);
         call.enqueue(new Callback<LastFmModels.TrackInfoResponse>() {
@@ -158,15 +172,29 @@ public class SearchFragment extends Fragment {
         });
     }
 
-    private synchronized void checkIfAllDataFetched() {
+    private void showErrorView() {
+        if (!isAdded()) return;
+        progressBar.setVisibility(View.GONE);
+        recyclerView.setVisibility(View.GONE);
+        textViewInfo.setVisibility(View.GONE);
+        layoutError.setVisibility(View.VISIBLE);
+    }
+
+    private void checkIfAllDataFetched() {
         tracksFetched++;
         if (tracksFetched >= totalTracksToFetch) {
             if (getActivity() != null) {
                 getActivity().runOnUiThread(() -> {
+                    if (!isAdded()) return;
                     progressBar.setVisibility(View.GONE);
-                    recyclerView.setVisibility(View.VISIBLE);
-                    trackAdapter.setTracks(completeTrackList, "search");
-                    Log.d(TAG, "All search results loaded and displayed.");
+                    if (completeTrackList.isEmpty()) {
+                        showErrorView();
+                    } else {
+                        recyclerView.setVisibility(View.VISIBLE);
+                        layoutError.setVisibility(View.GONE);
+                        trackAdapter.setTracks(completeTrackList, "search");
+                        Log.d(TAG, "All search results loaded and displayed.");
+                    }
                 });
             }
         }

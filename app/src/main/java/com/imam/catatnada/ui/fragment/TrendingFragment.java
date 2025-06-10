@@ -5,6 +5,8 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;    // BARU: Import untuk Button
+import android.widget.LinearLayout; // BARU: Import untuk LinearLayout
 import android.widget.ProgressBar;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -37,6 +39,11 @@ public class TrendingFragment extends Fragment {
     private TrackAdapter trackAdapter;
     private ApiService apiService;
 
+    // BARU: Komponen untuk menampilkan error dan retry
+    private LinearLayout layoutError;
+    private Button buttonRetry;
+    private String currentTag = "Global"; // Untuk menyimpan tag terakhir yang dipilih
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_trending, container, false);
@@ -50,6 +57,9 @@ public class TrendingFragment extends Fragment {
         recyclerView = view.findViewById(R.id.recyclerViewTracks);
         progressBar = view.findViewById(R.id.progressBar);
         ChipGroup chipGroupGenre = view.findViewById(R.id.chipGroupGenre);
+        // BARU: Inisialisasi view untuk error
+        layoutError = view.findViewById(R.id.layoutError);
+        buttonRetry = view.findViewById(R.id.buttonRetry);
 
         // Setup RecyclerView & Adapter
         trackAdapter = new TrackAdapter();
@@ -59,33 +69,38 @@ public class TrendingFragment extends Fragment {
         // Inisialisasi API Service
         apiService = RetrofitClient.getClient().create(ApiService.class);
 
+        // BARU: Setup listener untuk tombol Retry
+        buttonRetry.setOnClickListener(v -> fetchTopTracksByTag(currentTag));
+
         // Setup listener untuk ChipGroup
         chipGroupGenre.setOnCheckedChangeListener((group, checkedId) -> {
+            // BARU: Simpan tag yang dipilih ke variabel
             if (checkedId == R.id.chipGlobal) {
-                fetchTopTracksByTag("Global");
+                currentTag = "Global";
             } else if (checkedId == R.id.chipRock) {
-                fetchTopTracksByTag("rock");
+                currentTag = "rock";
             } else if (checkedId == R.id.chipPop) {
-                fetchTopTracksByTag("pop");
+                currentTag = "pop";
             } else if (checkedId == R.id.chipElectronic) {
-                fetchTopTracksByTag("electronic");
+                currentTag = "electronic";
             }
+            fetchTopTracksByTag(currentTag);
         });
 
-        // Muat data awal untuk "Global" saat fragment pertama kali dibuat
-        // Pastikan chip "Global" ter-checklist secara default di XML
-        if (savedInstanceState == null) { // Hanya panggil saat pertama kali fragment dibuat
-            fetchTopTracksByTag("Global");
+        // Muat data awal untuk "Global"
+        if (savedInstanceState == null) {
+            fetchTopTracksByTag(currentTag);
         }
     }
 
     private void fetchTopTracksByTag(String tag) {
-        // Tampilkan UI loading
+        // BARU: Saat fetch dimulai, sembunyikan semua UI lain
         progressBar.setVisibility(View.VISIBLE);
         recyclerView.setVisibility(View.GONE);
+        layoutError.setVisibility(View.GONE);
+
         // Kosongkan tampilan lama
         trackAdapter.setTracks(new ArrayList<>(), "trending");
-
         Log.d(TAG, "MEMULAI FETCH BARU untuk tag: " + tag);
 
         Call<LastFmModels.TopTracksResponse> call = tag.equals("Global") ?
@@ -95,60 +110,79 @@ public class TrendingFragment extends Fragment {
         call.enqueue(new Callback<LastFmModels.TopTracksResponse>() {
             @Override
             public void onResponse(Call<LastFmModels.TopTracksResponse> call, Response<LastFmModels.TopTracksResponse> response) {
-                if (!isAdded()) return; // Pastikan fragment masih terpasang
+                if (!isAdded()) return;
 
                 if (response.isSuccessful() && response.body() != null) {
                     List<LastFmModels.TrackSimple> simpleTracks = response.body().getTracks().getTrackList();
                     if (simpleTracks == null || simpleTracks.isEmpty()) {
                         progressBar.setVisibility(View.GONE);
+                        showErrorView();
                         return;
                     }
-
-                    // Proses pengambilan detail dengan "keranjang" lokalnya sendiri
+                    // Fetch detail untuk setiap track
                     fetchAllDetails(simpleTracks);
-
                 } else {
-                    progressBar.setVisibility(View.GONE);
+                    Log.e(TAG, "Gagal mendapatkan Top Tracks. Kode: " + response.code());
+                    showErrorView();
                 }
             }
 
             @Override
             public void onFailure(Call<LastFmModels.TopTracksResponse> call, Throwable t) {
-                if (isAdded()) {
-                    progressBar.setVisibility(View.GONE);
-                }
+                if (!isAdded()) return;
+                Log.e(TAG, "Gagal koneksi untuk tag: " + tag, t);
+                showErrorView();
             }
         });
     }
 
     private void fetchAllDetails(List<LastFmModels.TrackSimple> simpleTracks) {
-        // 1. Buat "keranjang" lokal baru untuk setiap operasi fetch
-        final List<LastFmModels.TrackDetail> newTrackList = Collections.synchronizedList(new ArrayList<>());
-        // 2. Buat counter thread-safe baru
-        final AtomicInteger counter = new AtomicInteger(0);
-        final int totalTracks = simpleTracks.size();
+        if (!isAdded()) return;
+
+        List<LastFmModels.TrackDetail> completeTrackList = new ArrayList<>();
+        AtomicInteger completedRequests = new AtomicInteger(0);
+        int totalRequests = simpleTracks.size();
 
         for (LastFmModels.TrackSimple track : simpleTracks) {
-            Call<LastFmModels.TrackInfoResponse> detailCall = apiService.getTrackInfo(API_KEY, track.getArtist().getName(), track.getName());
+            Call<LastFmModels.TrackInfoResponse> call = apiService.getTrackInfo(
+                API_KEY,
+                track.getArtist().getName(),
+                track.getName()
+            );
 
-            detailCall.enqueue(new Callback<LastFmModels.TrackInfoResponse>() {
+            call.enqueue(new Callback<LastFmModels.TrackInfoResponse>() {
                 @Override
                 public void onResponse(Call<LastFmModels.TrackInfoResponse> call, Response<LastFmModels.TrackInfoResponse> response) {
+                    if (!isAdded()) return;
+
                     if (response.isSuccessful() && response.body() != null && response.body().getTrack() != null) {
-                        // 3. Masukkan hasil ke "keranjang" lokal, bukan ke variabel global
-                        newTrackList.add(response.body().getTrack());
+                        completeTrackList.add(response.body().getTrack());
                     }
-                    // 4. Cek apakah semua sudah terkumpul
-                    if (counter.incrementAndGet() == totalTracks) {
-                        updateUiWithNewData(newTrackList);
+
+                    if (completedRequests.incrementAndGet() == totalRequests) {
+                        if (getActivity() != null) {
+                            getActivity().runOnUiThread(() -> {
+                                if (isAdded()) {
+                                    updateUiWithNewData(completeTrackList);
+                                }
+                            });
+                        }
                     }
                 }
 
                 @Override
                 public void onFailure(Call<LastFmModels.TrackInfoResponse> call, Throwable t) {
-                    // Tetap hitung agar proses tidak stuck
-                    if (counter.incrementAndGet() == totalTracks) {
-                        updateUiWithNewData(newTrackList);
+                    if (!isAdded()) return;
+                    Log.e(TAG, "Gagal mendapatkan detail untuk: " + track.getName(), t);
+                    
+                    if (completedRequests.incrementAndGet() == totalRequests) {
+                        if (getActivity() != null) {
+                            getActivity().runOnUiThread(() -> {
+                                if (isAdded()) {
+                                    updateUiWithNewData(completeTrackList);
+                                }
+                            });
+                        }
                     }
                 }
             });
@@ -156,15 +190,22 @@ public class TrendingFragment extends Fragment {
     }
 
     private void updateUiWithNewData(List<LastFmModels.TrackDetail> finalTrackList) {
-        if (getActivity() != null) {
-            getActivity().runOnUiThread(() -> {
-                if (!isAdded()) return; // Cek lagi sebelum update UI
-                progressBar.setVisibility(View.GONE);
-                recyclerView.setVisibility(View.VISIBLE);
-                // 5. Ganti data lama di adapter dengan data dari "keranjang" baru yang sudah penuh
-                trackAdapter.setTracks(finalTrackList, "trending");
-                Log.d(TAG, "UI diperbarui dengan " + finalTrackList.size() + " lagu.");
-            });
+        if (!isAdded()) return;
+
+        progressBar.setVisibility(View.GONE);
+        if (finalTrackList.isEmpty()) {
+            showErrorView();
+        } else {
+            recyclerView.setVisibility(View.VISIBLE);
+            layoutError.setVisibility(View.GONE);
+            trackAdapter.setTracks(finalTrackList, "trending");
         }
+    }
+
+    // BARU: Metode helper untuk menampilkan UI error
+    private void showErrorView() {
+        progressBar.setVisibility(View.GONE);
+        recyclerView.setVisibility(View.GONE);
+        layoutError.setVisibility(View.VISIBLE);
     }
 }

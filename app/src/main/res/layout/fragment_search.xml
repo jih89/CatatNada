@@ -51,6 +51,30 @@
             android:layout_gravity="center"
             android:visibility="visible"/>
 
+        <!-- Error View - sama dengan TrendingFragment -->
+        <LinearLayout
+            android:id="@+id/layoutError"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:visibility="gone" >
+
+            <TextView
+                android:id="@+id/textViewError"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Failed to load data. Check your connection."
+                android:layout_marginBottom="8dp"/>
+
+            <Button
+                android:id="@+id/buttonRetry"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Retry"/>
+        </LinearLayout>
+
     </FrameLayout>
 
 </LinearLayout>

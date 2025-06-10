@@ -95,7 +95,6 @@ public class PlaylistsFragment extends Fragment implements PlaylistAdapter.OnPla
 
         AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
         builder.setView(dialogView)
-                .setTitle("Create New Playlist") // Judul disesuaikan
                 .setPositiveButton("Save", (dialog, id) -> {
                     String playlistName = editTextPlaylistName.getText().toString().trim();
                     if (!playlistName.isEmpty()) {

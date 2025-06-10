@@ -22,7 +22,7 @@
         android:layout_marginStart="24dp"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="24dp"
-        android:text="Select your preferred theme for the app"
+        android:text="Select your preferred theme for CatatNada"
         android:textAppearance="@style/TextAppearance.CatatNada.BodyLarge"
         android:textColor="?attr/colorOnSurfaceVariant" />
 
