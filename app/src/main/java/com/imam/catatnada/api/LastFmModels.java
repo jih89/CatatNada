@@ -36,19 +36,35 @@ public class LastFmModels {
     // Model detail untuk satu lagu
     public static class TrackDetail {
         private String name;
+        private String url;
         private Artist artist;
         private Album album; // <-- Di sini ada info album
         private String listeners;
         private String playcount;
         private TopTags toptags;
+        private Wiki wiki;
 
         // Getters
         public String getName() { return name; }
+        public String getUrl() { return url; }
+
         public Artist getArtist() { return artist; }
         public Album getAlbum() { return album; }
         public String getListeners() { return listeners; }
         public String getPlaycount() { return playcount; }
         public TopTags getToptags() { return toptags; }
+        public Wiki getWiki() { return wiki; }
+    }
+
+    public static class Wiki {
+        private String published;
+        private String summary;
+        private String content;
+
+        // Getters
+        public String getPublished() { return published; }
+        public String getSummary() { return summary; }
+        public String getContent() { return content; }
     }
 
     public static class Album {

@@ -1,5 +1,7 @@
 package com.imam.catatnada.ui.adapter;
 
+import android.content.Context;
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,6 +12,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.imam.catatnada.R;
 import com.imam.catatnada.api.LastFmModels;
+import com.imam.catatnada.ui.activity.TrackDetailActivity;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,9 +37,23 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackViewHol
 
     @Override
     public void onBindViewHolder(@NonNull TrackViewHolder holder, int position) {
+        // 1. Dapatkan objek track yang benar untuk posisi ini
         LastFmModels.TrackDetail track = trackList.get(position);
-        // Kirim posisi ke ViewHolder untuk ditampilkan sebagai nomor
+
+        // 2. Panggil metode bind untuk menampilkan data ke view
         holder.bind(track, position + 1, screenType);
+
+        // 3. 🔽 SET LISTENER DI SINI, DI TEMPAT YANG BENAR 🔽
+        holder.itemView.setOnClickListener(v -> {
+            Context context = holder.itemView.getContext();
+            Intent intent = new Intent(context, TrackDetailActivity.class);
+
+            // Gunakan objek 'track' yang sudah kita dapatkan di atas
+            intent.putExtra(TrackDetailActivity.TRACK_NAME, track.getName());
+            intent.putExtra(TrackDetailActivity.ARTIST_NAME, track.getArtist().getName());
+
+            context.startActivity(intent);
+        });
     }
 
     @Override
@@ -60,32 +78,34 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackViewHol
         }
 
         public void bind(LastFmModels.TrackDetail track, int position, String screenType) {
+            // --- Bagian 1: Set data yang selalu sama ---
             textViewTrackName.setText(track.getName());
             textViewArtistName.setText(track.getArtist().getName());
 
-            // Logika untuk menampilkan nomor atau tidak
+            // --- Bagian 2: Logika untuk penomoran dan baris info berdasarkan screenType ---
             if ("trending".equalsIgnoreCase(screenType)) {
+                // Tampilkan nomor urut & listeners untuk layar TRENDING
                 textViewTrackNumber.setVisibility(View.VISIBLE);
                 textViewTrackNumber.setText(String.valueOf(position));
 
-                // Di layar trending, tampilkan listeners
                 if (track.getListeners() != null) {
                     textViewInfoLine.setText("Listeners: " + track.getListeners());
                 } else {
                     textViewInfoLine.setText("Listeners: -");
                 }
-            } else { // Jika dari layar search atau lainnya
-                textViewTrackNumber.setVisibility(View.GONE); // Sembunyikan nomor
+            } else { // Asumsikan ini untuk layar SEARCH atau lainnya
+                // Sembunyikan nomor urut & tampilkan nama album
+                textViewTrackNumber.setVisibility(View.GONE);
 
-                // Di layar search, tampilkan nama album (sesuai ide Anda)
                 if (track.getAlbum() != null && track.getAlbum().getTitle() != null) {
-                    textViewInfoLine.setText(track.getAlbum().getTitle());
+                    // Kita ubah agar lebih jelas, misal: "Album: [Nama Album]"
+                    textViewInfoLine.setText("Album: " + track.getAlbum().getTitle());
                 } else {
-                    textViewInfoLine.setText("N/A");
+                    textViewInfoLine.setText("Album: N/A");
                 }
             }
 
-            // Logika pengambilan gambar tetap sama
+            // --- Bagian 3: Logika untuk memuat gambar (berjalan untuk semua screenType) ---
             String imageUrl = null;
             if (track.getAlbum() != null && track.getAlbum().getImage() != null && !track.getAlbum().getImage().isEmpty()) {
                 int lastImageIndex = track.getAlbum().getImage().size() - 1;
@@ -97,8 +117,8 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackViewHol
 
             Glide.with(itemView.getContext())
                     .load(imageUrl)
-                    .placeholder(R.drawable.ic_launcher_foreground)
-                    .error(R.drawable.ic_launcher_foreground)
+                    .placeholder(R.drawable.ic_launcher_foreground) // Gunakan placeholder netral
+                    .error(R.drawable.ic_launcher_foreground)      // Gunakan placeholder netral
                     .into(imageViewAlbumArt);
         }
     }
