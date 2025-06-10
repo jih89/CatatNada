@@ -11,4 +11,18 @@
         android:label="Trending Songs"
         tools:layout="@layout/fragment_trending">
     </fragment>
+
+    <fragment
+        android:id="@+id/searchFragment"
+        android:name="com.imam.catatnada.ui.fragment.SearchFragment"
+        android:label="Search Songs"
+        tools:layout="@layout/fragment_search">
+    </fragment>
+
+    <fragment
+        android:id="@+id/playlistsFragment"
+        android:name="com.imam.catatnada.ui.fragment.PlaylistsFragment"
+        android:label="Playlists"
+        tools:layout="@layout/fragment_playlists">
+    </fragment>
 </navigation>

@@ -83,4 +83,31 @@ public class LastFmModels {
         public String getUrl() { return url; }
         public String getSize() { return size; }
     }
+
+    // Model paling luar untuk hasil pencarian
+    public static class SearchResultsResponse {
+        private SearchResults results;
+        public SearchResults getResults() { return results; }
+    }
+
+    public static class SearchResults {
+        @SerializedName("trackmatches")
+        private TrackMatches trackMatches;
+        public TrackMatches getTrackMatches() { return trackMatches; }
+    }
+
+    public static class TrackMatches {
+        @SerializedName("track")
+        private List<TrackSimpleSearch> trackList;
+        public List<TrackSimpleSearch> getTrackList() { return trackList; }
+    }
+
+    // Model untuk satu lagu dari hasil pencarian
+    // Mirip dengan TrackSimple, tapi nama artis ada di field berbeda
+    public static class TrackSimpleSearch {
+        private String name;
+        private String artist; // Di sini nama artis langsung jadi string
+        public String getName() { return name; }
+        public String getArtist() { return artist; }
+    }
 }

@@ -5,6 +5,7 @@ import retrofit2.http.GET;
 import retrofit2.http.Query;
 
 public interface ApiService {
+
     // Endpoint untuk mengambil Top Tracks
     @GET("?method=chart.gettoptracks&format=json")
     Call<LastFmModels.TopTracksResponse> getTopTracks(
@@ -24,6 +25,14 @@ public interface ApiService {
     @GET("?method=tag.gettoptracks&format=json")
     Call<LastFmModels.TopTracksResponse> getTagTopTracks(
             @Query("tag") String genre,
+            @Query("api_key") String apiKey,
+            @Query("limit") int limit
+    );
+
+    // Endpoint untuk mencari lagu berdasarkan nama
+    @GET("?method=track.search&format=json")
+    Call<LastFmModels.SearchResultsResponse> searchTracks(
+            @Query("track") String trackName,
             @Query("api_key") String apiKey,
             @Query("limit") int limit
     );

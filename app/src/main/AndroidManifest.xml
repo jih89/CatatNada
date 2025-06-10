@@ -15,6 +15,9 @@
         android:theme="@style/Theme.CatatNada"
         tools:targetApi="31">
         <activity
+            android:name=".ui.activity.TrackDetailActivity"
+            android:exported="false" />
+        <activity
             android:name=".ui.activity.MainActivity"
             android:exported="true">
             <intent-filter>

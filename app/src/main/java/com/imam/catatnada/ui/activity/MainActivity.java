@@ -25,7 +25,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         // Set BottomNavigationView
-        BottomNavigationView bottomNavView = findViewById(R.id.bottom_navigation);
+        BottomNavigationView bottomNavView = findViewById(R.id.bottom_nav);
 
         NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.nav_host_fragment);
