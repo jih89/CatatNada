@@ -129,4 +129,20 @@ public class PlaylistDataSource {
         String[] selectionArgs = { String.valueOf(playlistId) };
         return database.delete(DatabaseContract.PlaylistColumns.TABLE_NAME, selection, selectionArgs);
     }
+
+    public int updatePlaylist(long playlistId, String newName) {
+        ContentValues values = new ContentValues();
+        values.put(DatabaseContract.PlaylistColumns.COLUMN_NAME, newName);
+
+        String selection = DatabaseContract.PlaylistColumns._ID + " = ?";
+        String[] selectionArgs = { String.valueOf(playlistId) };
+
+        return database.update(
+                DatabaseContract.PlaylistColumns.TABLE_NAME,
+                values,
+                selection,
+                selectionArgs
+        );
+    }
+
 }

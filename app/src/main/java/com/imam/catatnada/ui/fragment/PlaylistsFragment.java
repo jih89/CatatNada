@@ -27,7 +27,8 @@ import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class PlaylistsFragment extends Fragment {
+// BARU: Implementasikan interface dari adapter
+public class PlaylistsFragment extends Fragment implements PlaylistAdapter.OnPlaylistActionClickListener {
 
     private RecyclerView recyclerView;
     private PlaylistAdapter adapter;
@@ -47,35 +48,32 @@ public class PlaylistsFragment extends Fragment {
         textViewNoPlaylists = view.findViewById(R.id.textViewNoPlaylists);
         FloatingActionButton fab = view.findViewById(R.id.fabAddPlaylist);
 
-        // Inisialisasi DataSource
         dataSource = PlaylistDataSource.getInstance(requireContext());
 
-        // Setup RecyclerView
         adapter = new PlaylistAdapter();
+        // BARU: Daftarkan fragment ini sebagai listener untuk aksi update/delete
+        adapter.setOnPlaylistActionClickListener(this);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         recyclerView.setAdapter(adapter);
 
         fab.setOnClickListener(v -> showAddPlaylistDialog());
     }
+
     @Override
     public void onResume() {
         super.onResume();
-        // Muat data setiap kali fragment ini ditampilkan agar selalu update
         loadPlaylistsAsync();
     }
 
     private void loadPlaylistsAsync() {
-        // Ini adalah implementasi Background Thread yang disyaratkan
+        // Metode ini sudah benar, tidak perlu diubah
         ExecutorService executor = Executors.newSingleThreadExecutor();
         Handler handler = new Handler(Looper.getMainLooper());
 
         executor.execute(() -> {
-            // Background thread
             dataSource.open();
             ArrayList<Playlist> playlists = dataSource.getAllPlaylists();
             dataSource.close();
-
-            // UI thread
             handler.post(() -> {
                 if (playlists.isEmpty()) {
                     textViewNoPlaylists.setVisibility(View.VISIBLE);
@@ -89,22 +87,18 @@ public class PlaylistsFragment extends Fragment {
         });
     }
 
-    /**
-     * Menampilkan dialog pop-up untuk membuat playlist baru.
-     */
     private void showAddPlaylistDialog() {
-        // Buat layout untuk dialog dari file XML
+        // Metode ini sudah benar, tidak perlu diubah
         LayoutInflater inflater = requireActivity().getLayoutInflater();
         View dialogView = inflater.inflate(R.layout.dialog_add_playlist, null);
         final EditText editTextPlaylistName = dialogView.findViewById(R.id.editTextPlaylistName);
 
-        // Bangun AlertDialog
         AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
         builder.setView(dialogView)
+                .setTitle("Create New Playlist") // Judul disesuaikan
                 .setPositiveButton("Save", (dialog, id) -> {
                     String playlistName = editTextPlaylistName.getText().toString().trim();
                     if (!playlistName.isEmpty()) {
-                        // Panggil metode untuk menyimpan ke database
                         saveNewPlaylist(playlistName);
                     } else {
                         Toast.makeText(getContext(), "Playlist name cannot be empty", Toast.LENGTH_SHORT).show();
@@ -115,29 +109,89 @@ public class PlaylistsFragment extends Fragment {
         builder.create().show();
     }
 
-    /**
-     * Menyimpan playlist baru ke database menggunakan background thread.
-     */
     private void saveNewPlaylist(String name) {
-        // Implementasi Background Thread
+        // Metode ini sudah benar, tidak perlu diubah
         ExecutorService executor = Executors.newSingleThreadExecutor();
         Handler handler = new Handler(Looper.getMainLooper());
 
         executor.execute(() -> {
-            // Background thread
             dataSource.open();
             long result = dataSource.createPlaylist(name);
             dataSource.close();
 
-            // UI thread
             handler.post(() -> {
                 if (result > 0) {
                     Toast.makeText(getContext(), "Playlist '" + name + "' created!", Toast.LENGTH_SHORT).show();
-                    // Muat ulang daftar playlist agar yang baru muncul
                     loadPlaylistsAsync();
                 } else {
                     Toast.makeText(getContext(), "Failed to create playlist", Toast.LENGTH_SHORT).show();
                 }
+            });
+        });
+    }
+
+    // --- BARU: Implementasi metode dari interface OnPlaylistActionClickListener ---
+
+    @Override
+    public void onUpdateClicked(Playlist playlist) {
+        // Metode ini dipanggil dari adapter saat pengguna memilih "Edit Nama"
+        LayoutInflater inflater = requireActivity().getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.dialog_add_playlist, null);
+        final EditText editTextPlaylistName = dialogView.findViewById(R.id.editTextPlaylistName);
+        editTextPlaylistName.setText(playlist.getName()); // Isi dengan nama lama
+
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Update Playlist Name")
+                .setView(dialogView)
+                .setPositiveButton("Update", (dialog, id) -> {
+                    String newName = editTextPlaylistName.getText().toString().trim();
+                    if (!newName.isEmpty()) {
+                        updatePlaylistNameInDb(playlist.getId(), newName);
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .create().show();
+    }
+
+    @Override
+    public void onDeleteClicked(Playlist playlist) {
+        // Metode ini dipanggil dari adapter saat pengguna memilih "Hapus Playlist"
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Delete Playlist")
+                .setMessage("Are you sure you want to delete '" + playlist.getName() + "'?")
+                .setPositiveButton("Delete", (dialog, which) -> {
+                    deletePlaylistFromDb(playlist.getId());
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    // --- BARU: Metode helper untuk menjalankan operasi update/delete di background ---
+
+    private void updatePlaylistNameInDb(long playlistId, String newName) {
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Handler handler = new Handler(Looper.getMainLooper());
+        executor.execute(() -> {
+            dataSource.open();
+            dataSource.updatePlaylist(playlistId, newName);
+            dataSource.close();
+            handler.post(() -> {
+                Toast.makeText(getContext(), "Playlist updated", Toast.LENGTH_SHORT).show();
+                loadPlaylistsAsync(); // Refresh daftar playlist
+            });
+        });
+    }
+
+    private void deletePlaylistFromDb(long playlistId) {
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Handler handler = new Handler(Looper.getMainLooper());
+        executor.execute(() -> {
+            dataSource.open();
+            dataSource.deletePlaylistById(playlistId);
+            dataSource.close();
+            handler.post(() -> {
+                Toast.makeText(getContext(), "Playlist deleted", Toast.LENGTH_SHORT).show();
+                loadPlaylistsAsync(); // Refresh daftar playlist
             });
         });
     }

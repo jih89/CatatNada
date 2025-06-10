@@ -23,7 +23,7 @@ import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-// FIX #1: Pastikan Anda benar-benar mengimplementasikan interface yang dijanjikan
+// FIX #1: Implementasikan interface
 public class PlaylistDetailFragment extends Fragment implements TrackAdapter.OnTrackDeleteListener {
 
     private RecyclerView recyclerView;
@@ -51,10 +51,10 @@ public class PlaylistDetailFragment extends Fragment implements TrackAdapter.OnT
         recyclerView = view.findViewById(R.id.recyclerViewPlaylistTracks);
         adapter = new TrackAdapter();
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        recyclerView.setAdapter(adapter);
 
-        // Pasang listener delete ke adapter
+        // FIX #2: Set listener SEBELUM set adapter
         adapter.setOnTrackDeleteListener(this);
+        recyclerView.setAdapter(adapter);
 
         dataSource = PlaylistDataSource.getInstance(requireContext());
         loadTracksFromPlaylist();
@@ -65,36 +65,27 @@ public class PlaylistDetailFragment extends Fragment implements TrackAdapter.OnT
         Handler handler = new Handler(Looper.getMainLooper());
 
         executor.execute(() -> {
-            // --- Background Thread ---
             dataSource.open();
             ArrayList<Track> tracksFromDb = dataSource.getTracksFromPlaylist(playlistId);
             dataSource.close();
 
-            // --- UI Thread ---
             handler.post(() -> {
-                // FIX #2: Variabel 'tracksFromDb' sekarang digunakan dengan benar di sini
-                // untuk dikirim ke adapter.
                 adapter.setTracks(tracksFromDb, "playlistDetail");
-                // TODO: Tampilkan pesan jika playlist kosong
             });
         });
     }
 
-    // FIX #1: Implementasikan metode onTrackDeleted yang wajib ada karena interface
+    // Metode ini sekarang wajib ada karena implementasi interface
     @Override
     public void onTrackDeleted(long trackId, String trackName) {
-        // Tampilkan dialog konfirmasi sebelum menghapus
         new AlertDialog.Builder(requireContext())
                 .setTitle("Delete Track")
                 .setMessage("Are you sure you want to delete '" + trackName + "'?")
-                .setPositiveButton("Delete", (dialog, which) -> {
-                    deleteTrackFromDb(trackId);
-                })
+                .setPositiveButton("Delete", (dialog, which) -> deleteTrackFromDb(trackId))
                 .setNegativeButton("Cancel", null)
                 .show();
     }
 
-    // Metode untuk menghapus track dari database di background
     private void deleteTrackFromDb(long trackId) {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         Handler handler = new Handler(Looper.getMainLooper());
@@ -107,7 +98,6 @@ public class PlaylistDetailFragment extends Fragment implements TrackAdapter.OnT
             handler.post(() -> {
                 if (result > 0) {
                     Toast.makeText(getContext(), "Track deleted", Toast.LENGTH_SHORT).show();
-                    // Muat ulang daftar lagu agar item yang dihapus hilang
                     loadTracksFromPlaylist();
                 } else {
                     Toast.makeText(getContext(), "Failed to delete track", Toast.LENGTH_SHORT).show();

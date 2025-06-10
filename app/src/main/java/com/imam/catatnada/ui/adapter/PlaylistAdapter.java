@@ -1,30 +1,30 @@
 package com.imam.catatnada.ui.adapter;
 
-import android.app.AlertDialog;
-import android.content.Context;
-import android.os.Handler;
-import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-import android.os.Bundle;
-import android.widget.Toast;
-
 import androidx.annotation.NonNull;
-import androidx.navigation.Navigation;
+import androidx.appcompat.app.AlertDialog; // Import AlertDialog
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.imam.catatnada.R;
-import com.imam.catatnada.database.Playlist; // Pastikan import ini benar
-import com.imam.catatnada.database.PlaylistDataSource;
-
+import com.imam.catatnada.database.Playlist;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.PlaylistViewHolder> {
+
+    // --- Interface untuk berkomunikasi dengan Fragment ---
+    public interface OnPlaylistActionClickListener {
+        void onUpdateClicked(Playlist playlist);
+        void onDeleteClicked(Playlist playlist);
+    }
+    private OnPlaylistActionClickListener actionListener;
+
+    public void setOnPlaylistActionClickListener(OnPlaylistActionClickListener listener) {
+        this.actionListener = listener;
+    }
+    // ----------------------------------------------------
 
     private final List<Playlist> playlistList = new ArrayList<>();
 
@@ -43,7 +43,8 @@ public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.Playli
 
     @Override
     public void onBindViewHolder(@NonNull PlaylistViewHolder holder, int position) {
-        holder.bind(playlistList.get(position));
+        // Kirim listener ke ViewHolder
+        holder.bind(playlistList.get(position), actionListener);
     }
 
     @Override
@@ -59,52 +60,30 @@ public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.Playli
             textViewPlaylistName = itemView.findViewById(R.id.textViewPlaylistName);
         }
 
-        public void bind(Playlist playlist) {
+        // Metode bind sekarang menerima listener
+        public void bind(Playlist playlist, OnPlaylistActionClickListener listener) {
             textViewPlaylistName.setText(playlist.getName());
 
-            // 🔽 TAMBAHKAN ONCLICKLISTENER DI SINI 🔽
-            itemView.setOnClickListener(v -> {
-                // Buat bundle untuk mengirim argumen
-                Bundle bundle = new Bundle();
-                bundle.putLong("playlistId", playlist.getId());
-                bundle.putString("playlistName", playlist.getName());
+            // TODO: Nanti tambahkan listener klik biasa untuk membuka detail
+            // itemView.setOnClickListener(v -> { ... });
 
-                // Gunakan NavController untuk berpindah fragment
-                Navigation.findNavController(v).navigate(R.id.action_playlistsFragment_to_playlistDetailFragment, bundle);
-            });
-
+            // Listener tekan lama untuk memunculkan pilihan Update/Delete
             itemView.setOnLongClickListener(v -> {
-                new AlertDialog.Builder(itemView.getContext())
-                        .setTitle("Delete Playlist")
-                        .setMessage("Delete '" + playlist.getName() + "'? All tracks inside will be lost.")
-                        .setPositiveButton("Delete", (dialog, which) -> {
-                            // Di sini kita akan memanggil metode delete
-                            deletePlaylist(playlist.getId(), itemView.getContext());
-                        })
-                        .setNegativeButton("Cancel", null)
-                        .show();
-                return true; // Kembalikan true untuk menandakan event sudah ditangani
-            });
-        }
-
-        private void deletePlaylist(long playlistId, Context context) {
-            PlaylistDataSource dataSource = PlaylistDataSource.getInstance(context);
-            ExecutorService executor = Executors.newSingleThreadExecutor();
-            Handler handler = new Handler(Looper.getMainLooper());
-
-            executor.execute(() -> {
-                dataSource.open();
-                dataSource.deletePlaylistById(playlistId);
-                dataSource.close();
-
-                handler.post(() -> {
-                    Toast.makeText(context, "Playlist deleted", Toast.LENGTH_SHORT).show();
-                    // Bagaimana cara me-refresh list di fragment? Kita butuh listener!
-                    // Untuk sementara, kita tidak bisa refresh otomatis dari adapter.
-                });
+                if (listener != null) {
+                    CharSequence[] options = {"Edit Nama", "Hapus Playlist"};
+                    new AlertDialog.Builder(itemView.getContext())
+                            .setTitle("Aksi untuk '" + playlist.getName() + "'")
+                            .setItems(options, (dialog, which) -> {
+                                if (which == 0) { // Opsi "Edit Nama"
+                                    listener.onUpdateClicked(playlist);
+                                } else { // Opsi "Hapus Playlist"
+                                    listener.onDeleteClicked(playlist);
+                                }
+                            })
+                            .show();
+                }
+                return true; // Event sudah ditangani
             });
         }
     }
-
-
 }
