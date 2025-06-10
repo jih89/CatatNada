@@ -1,15 +1,5 @@
 # CatatNada 🎵
 
-<p align="center">
-  <img src="https://i.imgur.com/3930933542075352694.jpeg" width="200">
-</p>
-
-<p align="center">
-  <strong>Sebuah "Buku Catatan" Musik Pribadi untuk Android</strong>
-</p>
-
----
-
 **CatatNada** adalah aplikasi Android yang dirancang untuk para pencinta musik. Aplikasi ini berfungsi sebagai alat bantu untuk menemukan lagu baru yang sedang tren, mencari informasi detail tentang lagu dan artis, serta memungkinkan pengguna untuk mengkurasi **playlist pribadi yang disimpan secara lokal** di perangkat.
 
 Proyek ini dikembangkan untuk memenuhi tugas akhir saya sebagai praktikan lab mobile, dan juga untuk menerapkan serangkaian kriteria teknis pengembangan aplikasi Android, mulai dari UI, networking, hingga penyimpanan data lokal.
