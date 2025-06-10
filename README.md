@@ -15,7 +15,7 @@ Proyek ini dikembangkan untuk memenuhi tugas akhir saya sebagai praktikan lab mo
 
 ---
 
-## 🛠️ Tumpukan Teknologi (Tech Stack)
+## 🛠️ Tech Stack Yang Digunakan
 
 | Kategori | Teknologi |
 | :--- | :--- |
