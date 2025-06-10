@@ -46,4 +46,10 @@
             app:destination="@id/playlistDetailFragment" />
 
     </fragment>
+
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="com.imam.catatnada.ui.fragment.SettingsFragment"
+        android:label="Settings" />
+
 </navigation>

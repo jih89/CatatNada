@@ -2,6 +2,8 @@ package com.imam.catatnada.ui.activity;
 
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
@@ -13,6 +15,7 @@ import com.imam.catatnada.R;
 import com.imam.catatnada.api.ApiService;
 import com.imam.catatnada.api.LastFmModels;
 import com.imam.catatnada.api.RetrofitClient;
+import com.imam.catatnada.ui.fragment.SettingsFragment;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -62,5 +65,26 @@ public class MainActivity extends AppCompatActivity {
                 toolbar.setTitle(label);
             }
         });
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == R.id.action_settings) {
+            // Navigate to settings using NavController
+            NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager()
+                    .findFragmentById(R.id.nav_host_fragment);
+            if (navHostFragment != null) {
+                NavController navController = navHostFragment.getNavController();
+                navController.navigate(R.id.settingsFragment);
+            }
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 }

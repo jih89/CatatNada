@@ -1,18 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
-    <style name="Base.Theme.CatatNada" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
-    </style>
-
-    <!-- Style untuk toolbar yang lebih kecil -->
-    <style name="TextAppearance.CatatNada.Toolbar" parent="TextAppearance.Material3.TitleMedium">
-        <item name="android:textSize">20sp</item>
-        <item name="android:textColor">?attr/colorOnBackground</item>
-        <item name="android:textStyle">bold</item>
-    </style>
-
+    <!-- Base application theme -->
     <style name="Theme.CatatNada" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Primary brand color -->
         <item name="colorPrimary">@color/primary</item>
@@ -48,9 +36,15 @@
         <item name="textAppearanceHeadlineLarge">@style/TextAppearance.CatatNada.HeadlineLarge</item>
         <item name="textAppearanceHeadlineMedium">@style/TextAppearance.CatatNada.HeadlineMedium</item>
         <item name="textAppearanceHeadlineSmall">@style/TextAppearance.CatatNada.HeadlineSmall</item>
+        <item name="textAppearanceTitleLarge">@style/TextAppearance.CatatNada.TitleLarge</item>
+        <item name="textAppearanceTitleMedium">@style/TextAppearance.CatatNada.TitleMedium</item>
+        <item name="textAppearanceTitleSmall">@style/TextAppearance.CatatNada.TitleSmall</item>
         <item name="textAppearanceBodyLarge">@style/TextAppearance.CatatNada.BodyLarge</item>
         <item name="textAppearanceBodyMedium">@style/TextAppearance.CatatNada.BodyMedium</item>
         <item name="textAppearanceBodySmall">@style/TextAppearance.CatatNada.BodySmall</item>
+        <item name="textAppearanceLabelLarge">@style/TextAppearance.CatatNada.LabelLarge</item>
+        <item name="textAppearanceLabelMedium">@style/TextAppearance.CatatNada.LabelMedium</item>
+        <item name="textAppearanceLabelSmall">@style/TextAppearance.CatatNada.LabelSmall</item>
     </style>
 
     <!-- Shape Appearances -->
@@ -72,31 +66,68 @@
     <!-- Typography -->
     <style name="TextAppearance.CatatNada.HeadlineLarge" parent="TextAppearance.Material3.HeadlineLarge">
         <item name="android:textSize">32sp</item>
-        <item name="android:textColor">?attr/colorOnBackground</item>
+        <item name="android:textColor">?attr/colorOnSurface</item>
     </style>
 
     <style name="TextAppearance.CatatNada.HeadlineMedium" parent="TextAppearance.Material3.HeadlineMedium">
         <item name="android:textSize">28sp</item>
-        <item name="android:textColor">?attr/colorOnBackground</item>
+        <item name="android:textColor">?attr/colorOnSurface</item>
     </style>
 
     <style name="TextAppearance.CatatNada.HeadlineSmall" parent="TextAppearance.Material3.HeadlineSmall">
         <item name="android:textSize">24sp</item>
-        <item name="android:textColor">?attr/colorOnBackground</item>
+        <item name="android:textColor">?attr/colorOnSurface</item>
+    </style>
+
+    <style name="TextAppearance.CatatNada.TitleLarge" parent="TextAppearance.Material3.TitleLarge">
+        <item name="android:textSize">22sp</item>
+        <item name="android:textColor">?attr/colorOnSurface</item>
+    </style>
+
+    <style name="TextAppearance.CatatNada.TitleMedium" parent="TextAppearance.Material3.TitleMedium">
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">?attr/colorOnSurface</item>
+    </style>
+
+    <style name="TextAppearance.CatatNada.TitleSmall" parent="TextAppearance.Material3.TitleSmall">
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">?attr/colorOnSurface</item>
     </style>
 
     <style name="TextAppearance.CatatNada.BodyLarge" parent="TextAppearance.Material3.BodyLarge">
         <item name="android:textSize">16sp</item>
-        <item name="android:textColor">?attr/colorOnBackground</item>
+        <item name="android:textColor">?attr/colorOnSurfaceVariant</item>
     </style>
 
     <style name="TextAppearance.CatatNada.BodyMedium" parent="TextAppearance.Material3.BodyMedium">
         <item name="android:textSize">14sp</item>
-        <item name="android:textColor">?attr/colorOnBackground</item>
+        <item name="android:textColor">?attr/colorOnSurfaceVariant</item>
     </style>
 
     <style name="TextAppearance.CatatNada.BodySmall" parent="TextAppearance.Material3.BodySmall">
         <item name="android:textSize">12sp</item>
-        <item name="android:textColor">?attr/colorOnBackground</item>
+        <item name="android:textColor">?attr/colorOnSurfaceVariant</item>
+    </style>
+
+    <style name="TextAppearance.CatatNada.LabelLarge" parent="TextAppearance.Material3.LabelLarge">
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">?attr/colorOnSurfaceVariant</item>
+    </style>
+
+    <style name="TextAppearance.CatatNada.LabelMedium" parent="TextAppearance.Material3.LabelMedium">
+        <item name="android:textSize">12sp</item>
+        <item name="android:textColor">?attr/colorOnSurfaceVariant</item>
+    </style>
+
+    <style name="TextAppearance.CatatNada.LabelSmall" parent="TextAppearance.Material3.LabelSmall">
+        <item name="android:textSize">11sp</item>
+        <item name="android:textColor">?attr/colorOnSurfaceVariant</item>
+    </style>
+
+    <!-- Toolbar style -->
+    <style name="TextAppearance.CatatNada.Toolbar" parent="TextAppearance.Material3.TitleMedium">
+        <item name="android:textSize">18sp</item>
+        <item name="android:textColor">?attr/colorOnPrimary</item>
+        <item name="android:textStyle">bold</item>
     </style>
 </resources>
