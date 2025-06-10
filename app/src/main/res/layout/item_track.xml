@@ -64,6 +64,16 @@
                 android:text="Listeners: 0"
                 android:textSize="12sp" />
 
+            <ImageButton
+                android:id="@+id/buttonDeleteTrack"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Delete Track"
+                android:src="@drawable/ic_delete"
+                android:visibility="gone"
+                app:tint="?android:attr/textColorSecondary" />
+
         </LinearLayout>
     </LinearLayout>
 </androidx.cardview.widget.CardView>

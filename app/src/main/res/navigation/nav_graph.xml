@@ -20,9 +20,30 @@
     </fragment>
 
     <fragment
+        android:id="@+id/playlistDetailFragment"
+        android:name="com.imam.catatnada.ui.fragment.PlaylistDetailFragment"
+        android:label="{playlistName}"
+        tools:layout="@layout/fragment_playlist_detail">
+
+        <argument
+            android:name="playlistId"
+            app:argType="long" />
+
+        <argument
+            android:name="playlistName"
+            app:argType="string" />
+
+    </fragment>
+
+    <fragment
         android:id="@+id/playlistsFragment"
         android:name="com.imam.catatnada.ui.fragment.PlaylistsFragment"
         android:label="Playlists"
         tools:layout="@layout/fragment_playlists">
+
+        <action
+            android:id="@+id/action_playlistsFragment_to_playlistDetailFragment"
+            app:destination="@id/playlistDetailFragment" />
+
     </fragment>
 </navigation>

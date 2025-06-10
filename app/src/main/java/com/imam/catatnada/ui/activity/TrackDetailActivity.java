@@ -1,8 +1,11 @@
 package com.imam.catatnada.ui.activity;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -10,6 +13,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.bumptech.glide.Glide;
@@ -19,6 +23,13 @@ import com.imam.catatnada.R;
 import com.imam.catatnada.api.ApiService;
 import com.imam.catatnada.api.LastFmModels;
 import com.imam.catatnada.api.RetrofitClient;
+import com.imam.catatnada.database.Playlist;
+import com.imam.catatnada.database.PlaylistDataSource;
+import com.imam.catatnada.database.Track;
+
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -34,30 +45,33 @@ public class TrackDetailActivity extends AppCompatActivity {
     private TextView textViewTrackName, textViewArtistName, textViewAlbumName, textViewSummary;
     private ChipGroup chipGroupTags;
     private Button buttonViewOnLastFm;
-
     private ApiService apiService;
+
+    // BARU: Variabel untuk database dan UI playlist
+    private Button buttonSaveToPlaylist;
+    private PlaylistDataSource dataSource;
+    private LastFmModels.TrackDetail currentTrackDetail;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_track_detail);
 
-        // Inisialisasi Views
         initViews();
 
-        // Ambil data dari Intent
         String trackName = getIntent().getStringExtra(TRACK_NAME);
         String artistName = getIntent().getStringExtra(ARTIST_NAME);
 
-        // Inisialisasi API service
         apiService = RetrofitClient.getClient().create(ApiService.class);
 
-        // Ambil data detail jika trackName dan artistName ada
+        // BARU: Inisialisasi DataSource
+        dataSource = PlaylistDataSource.getInstance(this);
+
         if (trackName != null && artistName != null) {
             fetchTrackDetails(artistName, trackName);
         } else {
             Toast.makeText(this, "Error: Track data not found.", Toast.LENGTH_SHORT).show();
-            finish(); // Tutup activity jika tidak ada data
+            finish();
         }
     }
 
@@ -69,9 +83,12 @@ public class TrackDetailActivity extends AppCompatActivity {
         textViewSummary = findViewById(R.id.textViewDetailSummary);
         chipGroupTags = findViewById(R.id.chipGroupTags);
         buttonViewOnLastFm = findViewById(R.id.buttonViewOnLastFm);
+        // BARU: Inisialisasi tombol simpan
+        buttonSaveToPlaylist = findViewById(R.id.buttonSaveToPlaylist);
     }
 
     private void fetchTrackDetails(String artistName, String trackName) {
+        // Ambil API Key dari BuildConfig untuk keamanan
         String apiKey = "a604b5b421465fe9e7be6f7f96edf595";
         Call<LastFmModels.TrackInfoResponse> call = apiService.getTrackInfo(apiKey, artistName, trackName);
 
@@ -95,53 +112,35 @@ public class TrackDetailActivity extends AppCompatActivity {
     }
 
     private void updateUi(LastFmModels.TrackDetail track) {
+        // BARU: Simpan info track saat ini ke variabel global agar bisa diakses nanti
+        this.currentTrackDetail = track;
+
         // Set data teks
         textViewTrackName.setText(track.getName());
         textViewArtistName.setText(track.getArtist().getName());
 
-        // Cek jika ada info album
+        // ... (Sisa kode update UI Anda sudah benar semua)
         if (track.getAlbum() != null) {
             textViewAlbumName.setText(track.getAlbum().getTitle());
-
-            // Ambil gambar sampul
             if (track.getAlbum().getImage() != null && !track.getAlbum().getImage().isEmpty()) {
                 String imageUrl = track.getAlbum().getImage().get(track.getAlbum().getImage().size() - 1).getUrl();
-                Glide.with(this).load(imageUrl).into(imageViewDetailArt);
+                Glide.with(this).load(imageUrl).placeholder(R.drawable.ic_launcher_foreground).error(R.drawable.ic_launcher_foreground).into(imageViewDetailArt);
             }
         } else {
             textViewAlbumName.setText("N/A");
         }
 
-        // Tampilkan ringkasan/wiki
         if (track.getWiki() != null && track.getWiki().getSummary() != null) {
-            // 1. Ambil teks ringkasan asli dari API
             String originalSummary = track.getWiki().getSummary();
-
-            // 2. Cari posisi di mana tag <a> dimulai
             int linkPosition = originalSummary.indexOf("<a href=");
-
-            String cleanSummary;
-
-            // 3. Cek apakah tag <a> ditemukan
-            if (linkPosition != -1) {
-                // Jika ditemukan, potong string dari awal sampai sebelum tag <a>
-                cleanSummary = originalSummary.substring(0, linkPosition).trim();
-            } else {
-                // Jika tidak ada tag, gunakan teks aslinya
-                cleanSummary = originalSummary.trim();
-            }
-
-            // 4. Tampilkan teks yang sudah bersih
+            String cleanSummary = (linkPosition != -1) ? originalSummary.substring(0, linkPosition).trim() : originalSummary.trim();
             textViewSummary.setText(cleanSummary);
-
         } else {
-            // Jika tidak ada deskripsi, sembunyikan TextView-nya
             textViewSummary.setVisibility(View.GONE);
         }
 
-        // Tampilkan tags/genre sebagai Chip
         if (track.getToptags() != null && !track.getToptags().getTag().isEmpty()) {
-            chipGroupTags.removeAllViews(); // Bersihkan chip lama jika ada
+            chipGroupTags.removeAllViews();
             for (LastFmModels.Tag tag : track.getToptags().getTag()) {
                 Chip chip = new Chip(this);
                 chip.setText(tag.getName());
@@ -149,10 +148,80 @@ public class TrackDetailActivity extends AppCompatActivity {
             }
         }
 
-        // Set listener untuk tombol "View on Last.fm"
         buttonViewOnLastFm.setOnClickListener(v -> {
             Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(track.getUrl()));
             startActivity(browserIntent);
+        });
+
+        // BARU: Set listener untuk tombol "Save to Playlist"
+        buttonSaveToPlaylist.setOnClickListener(v -> showPlaylistSelectionDialog());
+    }
+
+    // --- BARU: Metode-metode untuk fungsionalitas playlist ---
+
+    private void showPlaylistSelectionDialog() {
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Handler handler = new Handler(Looper.getMainLooper());
+
+        executor.execute(() -> {
+            // Background thread
+            dataSource.open();
+            List<Playlist> playlists = dataSource.getAllPlaylists();
+            dataSource.close();
+
+            // UI thread
+            handler.post(() -> {
+                if (playlists.isEmpty()) {
+                    Toast.makeText(this, "No playlists available. Create one first!", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                CharSequence[] playlistNames = new CharSequence[playlists.size()];
+                for (int i = 0; i < playlists.size(); i++) {
+                    playlistNames[i] = playlists.get(i).getName();
+                }
+
+                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                builder.setTitle("Save to...")
+                        .setItems(playlistNames, (dialog, which) -> {
+                            Playlist selectedPlaylist = playlists.get(which);
+                            saveTrackToSelectedPlaylist(selectedPlaylist);
+                        });
+                builder.create().show();
+            });
+        });
+    }
+
+    private void saveTrackToSelectedPlaylist(Playlist selectedPlaylist) {
+        if (currentTrackDetail == null) return;
+
+        String trackName = currentTrackDetail.getName();
+        String artistName = currentTrackDetail.getArtist().getName();
+        String imageUrl = null;
+        if (currentTrackDetail.getAlbum() != null && !currentTrackDetail.getAlbum().getImage().isEmpty()) {
+            // Ambil gambar ukuran medium/large jika ada
+            imageUrl = currentTrackDetail.getAlbum().getImage().get(Math.min(2, currentTrackDetail.getAlbum().getImage().size() -1)).getUrl();
+        }
+
+        Track trackToSave = new Track(0, selectedPlaylist.getId(), trackName, artistName, imageUrl);
+
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Handler handler = new Handler(Looper.getMainLooper());
+
+        executor.execute(() -> {
+            // Background thread
+            dataSource.open();
+            long result = dataSource.addTrackToPlaylist(selectedPlaylist.getId(), trackToSave);
+            dataSource.close();
+
+            // UI thread
+            handler.post(() -> {
+                if (result > 0) {
+                    Toast.makeText(this, "Saved to '" + selectedPlaylist.getName() + "'", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(this, "Failed to save track", Toast.LENGTH_SHORT).show();
+                }
+            });
         });
     }
 }

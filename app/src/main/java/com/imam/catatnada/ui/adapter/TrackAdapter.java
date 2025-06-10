@@ -1,10 +1,12 @@
 package com.imam.catatnada.ui.adapter;
 
+import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
@@ -12,6 +14,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.imam.catatnada.R;
 import com.imam.catatnada.api.LastFmModels;
+import com.imam.catatnada.database.Track;
 import com.imam.catatnada.ui.activity.TrackDetailActivity;
 
 import java.util.ArrayList;
@@ -19,12 +22,24 @@ import java.util.List;
 
 public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackViewHolder> {
 
-    private List<LastFmModels.TrackDetail> trackList = new ArrayList<>();
-    private String screenType = "trending"; // Defaultnya adalah 'trending'
+    // --- Bagian Listener untuk Delete ---
+    public interface OnTrackDeleteListener {
+        void onTrackDeleted(long trackId, String trackName);
+    }
+    private OnTrackDeleteListener deleteListener;
 
-    public void setTracks(List<LastFmModels.TrackDetail> trackList, String screenType) {
-        this.trackList = trackList;
-        this.screenType = screenType; // Simpan tipe layarnya
+    public void setOnTrackDeleteListener(OnTrackDeleteListener listener) {
+        this.deleteListener = listener;
+    }
+    // ------------------------------------
+
+    private final List<Object> itemList = new ArrayList<>();
+    private String screenType = "trending";
+
+    public void setTracks(List<?> items, String screenType) {
+        this.itemList.clear();
+        this.itemList.addAll(items);
+        this.screenType = screenType;
         notifyDataSetChanged();
     }
 
@@ -37,39 +52,28 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackViewHol
 
     @Override
     public void onBindViewHolder(@NonNull TrackViewHolder holder, int position) {
-        // 1. Dapatkan objek track yang benar untuk posisi ini
-        LastFmModels.TrackDetail track = trackList.get(position);
-
-        // 2. Panggil metode bind untuk menampilkan data ke view
-        holder.bind(track, position + 1, screenType);
-
-        // 3. 🔽 SET LISTENER DI SINI, DI TEMPAT YANG BENAR 🔽
-        holder.itemView.setOnClickListener(v -> {
-            Context context = holder.itemView.getContext();
-            Intent intent = new Intent(context, TrackDetailActivity.class);
-
-            // Gunakan objek 'track' yang sudah kita dapatkan di atas
-            intent.putExtra(TrackDetailActivity.TRACK_NAME, track.getName());
-            intent.putExtra(TrackDetailActivity.ARTIST_NAME, track.getArtist().getName());
-
-            context.startActivity(intent);
-        });
+        // Kirim objek dan listener ke ViewHolder
+        holder.bind(itemList.get(position), position + 1, screenType, deleteListener);
     }
 
     @Override
     public int getItemCount() {
-        return trackList.size();
+        return itemList.size();
     }
 
+    // --- ViewHolder Class ---
     static class TrackViewHolder extends RecyclerView.ViewHolder {
-        private TextView textViewTrackNumber;
-        private ImageView imageViewAlbumArt;
-        private TextView textViewTrackName;
-        private TextView textViewArtistName;
-        private TextView textViewInfoLine;
+        private final ImageButton buttonDeleteTrack; // Tombol hapus
+        private final TextView textViewTrackNumber;
+        private final ImageView imageViewAlbumArt;
+        private final TextView textViewTrackName;
+        private final TextView textViewArtistName;
+        private final TextView textViewInfoLine;
 
         public TrackViewHolder(@NonNull View itemView) {
             super(itemView);
+            // Inisialisasi semua view, termasuk tombol hapus
+            buttonDeleteTrack = itemView.findViewById(R.id.buttonDeleteTrack);
             textViewTrackNumber = itemView.findViewById(R.id.textViewTrackNumber);
             imageViewAlbumArt = itemView.findViewById(R.id.imageViewAlbumArt);
             textViewTrackName = itemView.findViewById(R.id.textViewTrackName);
@@ -77,49 +81,77 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackViewHol
             textViewInfoLine = itemView.findViewById(R.id.textViewInfoLine);
         }
 
-        public void bind(LastFmModels.TrackDetail track, int position, String screenType) {
-            // --- Bagian 1: Set data yang selalu sama ---
-            textViewTrackName.setText(track.getName());
-            textViewArtistName.setText(track.getArtist().getName());
+        // Metode bind sekarang menerima listener sebagai parameter
+        public void bind(Object item, int position, String screenType, OnTrackDeleteListener listener) {
+            String trackName = "";
+            String artistName = "";
+            String imageUrl = null;
+            String infoLine = "";
 
-            // --- Bagian 2: Logika untuk penomoran dan baris info berdasarkan screenType ---
+            // --- Logika Ekstraksi Data ---
+            if (item instanceof LastFmModels.TrackDetail) {
+                LastFmModels.TrackDetail apiTrack = (LastFmModels.TrackDetail) item;
+                trackName = apiTrack.getName();
+                artistName = apiTrack.getArtist().getName();
+                if ("trending".equalsIgnoreCase(screenType)) {
+                    infoLine = "Listeners: " + apiTrack.getListeners();
+                } else {
+                    infoLine = (apiTrack.getAlbum() != null && apiTrack.getAlbum().getTitle() != null)
+                            ? "Album: " + apiTrack.getAlbum().getTitle() : "Album: N/A";
+                }
+                if (apiTrack.getAlbum() != null && !apiTrack.getAlbum().getImage().isEmpty()) {
+                    int imageIndex = Math.min(2, apiTrack.getAlbum().getImage().size() - 1);
+                    imageUrl = apiTrack.getAlbum().getImage().get(imageIndex).getUrl();
+                }
+            } else if (item instanceof Track) {
+                Track dbTrack = (Track) item;
+                trackName = dbTrack.getTrackName();
+                artistName = dbTrack.getArtistName();
+                imageUrl = dbTrack.getAlbumArtUrl();
+                infoLine = ""; // Kosongkan info line untuk item dari playlist
+            }
+
+            // --- Tampilkan Data ke UI ---
+            textViewTrackName.setText(trackName);
+            textViewArtistName.setText(artistName);
+            textViewInfoLine.setText(infoLine);
+            textViewInfoLine.setVisibility(infoLine.isEmpty() ? View.GONE : View.VISIBLE);
+
+            // ... Logika nomor dan gambar ...
             if ("trending".equalsIgnoreCase(screenType)) {
-                // Tampilkan nomor urut & listeners untuk layar TRENDING
                 textViewTrackNumber.setVisibility(View.VISIBLE);
                 textViewTrackNumber.setText(String.valueOf(position));
-
-                if (track.getListeners() != null) {
-                    textViewInfoLine.setText("Listeners: " + track.getListeners());
-                } else {
-                    textViewInfoLine.setText("Listeners: -");
-                }
-            } else { // Asumsikan ini untuk layar SEARCH atau lainnya
-                // Sembunyikan nomor urut & tampilkan nama album
+            } else {
                 textViewTrackNumber.setVisibility(View.GONE);
+            }
+            Glide.with(itemView.getContext()).load(imageUrl).placeholder(R.drawable.ic_launcher_foreground).error(R.drawable.ic_launcher_foreground).into(imageViewAlbumArt);
 
-                if (track.getAlbum() != null && track.getAlbum().getTitle() != null) {
-                    // Kita ubah agar lebih jelas, misal: "Album: [Nama Album]"
-                    textViewInfoLine.setText("Album: " + track.getAlbum().getTitle());
-                } else {
-                    textViewInfoLine.setText("Album: N/A");
-                }
+            // --- Logika untuk Tombol Hapus ---
+            if ("playlistDetail".equalsIgnoreCase(screenType) && item instanceof Track) {
+                buttonDeleteTrack.setVisibility(View.VISIBLE);
+                final Track trackToDelete = (Track) item;
+                buttonDeleteTrack.setOnClickListener(v -> {
+                    if (listener != null) {
+                        // Kirim ID dan Nama track yang akan dihapus ke Fragment
+                        listener.onTrackDeleted(trackToDelete.getId(), trackToDelete.getTrackName());
+                    }
+                });
+            } else {
+                buttonDeleteTrack.setVisibility(View.GONE);
             }
 
-            // --- Bagian 3: Logika untuk memuat gambar (berjalan untuk semua screenType) ---
-            String imageUrl = null;
-            if (track.getAlbum() != null && track.getAlbum().getImage() != null && !track.getAlbum().getImage().isEmpty()) {
-                int lastImageIndex = track.getAlbum().getImage().size() - 1;
-                imageUrl = track.getAlbum().getImage().get(lastImageIndex).getUrl();
-                if (imageUrl != null && imageUrl.isEmpty()) {
-                    imageUrl = null;
+            // --- Logika OnClickListener Universal untuk membuka detail ---
+            final String finalTrackName = trackName;
+            final String finalArtistName = artistName;
+            itemView.setOnClickListener(v -> {
+                if (finalTrackName != null && !finalTrackName.isEmpty() && finalArtistName != null && !finalArtistName.isEmpty()) {
+                    Context context = itemView.getContext();
+                    Intent intent = new Intent(context, TrackDetailActivity.class);
+                    intent.putExtra(TrackDetailActivity.TRACK_NAME, finalTrackName);
+                    intent.putExtra(TrackDetailActivity.ARTIST_NAME, finalArtistName);
+                    context.startActivity(intent);
                 }
-            }
-
-            Glide.with(itemView.getContext())
-                    .load(imageUrl)
-                    .placeholder(R.drawable.ic_launcher_foreground) // Gunakan placeholder netral
-                    .error(R.drawable.ic_launcher_foreground)      // Gunakan placeholder netral
-                    .into(imageViewAlbumArt);
+            });
         }
     }
 }
