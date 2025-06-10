@@ -19,4 +19,12 @@ public interface ApiService {
             @Query("artist") String artist,
             @Query("track") String track
     );
+
+    // Endpoint untuk mengambil Top Tracks berdasarkan Tag/Genre
+    @GET("?method=tag.gettoptracks&format=json")
+    Call<LastFmModels.TopTracksResponse> getTagTopTracks(
+            @Query("tag") String genre,
+            @Query("api_key") String apiKey,
+            @Query("limit") int limit
+    );
 }

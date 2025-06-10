@@ -12,6 +12,7 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.chip.ChipGroup; // FIX: 1. Impor yang hilang ditambahkan
 import com.imam.catatnada.R;
 import com.imam.catatnada.api.ApiService;
 import com.imam.catatnada.api.LastFmModels;
@@ -27,8 +28,9 @@ import retrofit2.Response;
 public class TrendingFragment extends Fragment {
 
     private static final String TAG = "TrendingFragment";
-    private final String API_KEY = "a604b5b421465fe9e7be6f7f96edf595"; // ❗ GANTI INI
+    private final String API_KEY = "a604b5b421465fe9e7be6f7f96edf595";
 
+    private ChipGroup chipGroupGenre;
     private RecyclerView recyclerView;
     private ProgressBar progressBar;
     private TrackAdapter trackAdapter;
@@ -50,6 +52,7 @@ public class TrendingFragment extends Fragment {
         // Inisialisasi Views
         recyclerView = view.findViewById(R.id.recyclerViewTracks);
         progressBar = view.findViewById(R.id.progressBar);
+        chipGroupGenre = view.findViewById(R.id.chipGroupGenre);
 
         // Setup RecyclerView
         trackAdapter = new TrackAdapter();
@@ -59,15 +62,44 @@ public class TrendingFragment extends Fragment {
         // Inisialisasi API Service
         apiService = RetrofitClient.getClient().create(ApiService.class);
 
-        // Mulai ambil data
-        fetchTopTracks();
+        // FIX: 3. Panggil metode setup listener
+        setupChipGroupListener();
+
+        // Muat data awal untuk "Global"
+        fetchTopTracksByTag("Global");
     }
 
-    private void fetchTopTracks() {
+    private void setupChipGroupListener() {
+        chipGroupGenre.setOnCheckedChangeListener((group, checkedId) -> {
+            if (checkedId == R.id.chipGlobal) {
+                fetchTopTracksByTag("Global");
+            } else if (checkedId == R.id.chipRock) {
+                fetchTopTracksByTag("rock");
+            } else if (checkedId == R.id.chipPop) {
+                fetchTopTracksByTag("pop");
+            } else if (checkedId == R.id.chipElectronic) {
+                fetchTopTracksByTag("electronic");
+            }
+        });
+    }
+
+    // FIX: 4. Nama metode diubah dan diberi parameter 'tag'
+    private void fetchTopTracksByTag(String tag) {
         progressBar.setVisibility(View.VISIBLE);
         recyclerView.setVisibility(View.GONE);
+        completeTrackList.clear();
+        trackAdapter.setTracks(new ArrayList<>()); // Kosongkan adapter
 
-        Call<LastFmModels.TopTracksResponse> call = apiService.getTopTracks(API_KEY, 20); // Ambil 10 lagu
+        Log.d(TAG, "Mulai mengambil data untuk tag: " + tag);
+
+        // FIX: 5. Deklarasikan variabel 'call' terlebih dahulu
+        Call<LastFmModels.TopTracksResponse> call;
+
+        if (tag.equals("Global")) {
+            call = apiService.getTopTracks(API_KEY, 10);
+        } else {
+            call = apiService.getTagTopTracks(tag, API_KEY, 10);
+        }
 
         call.enqueue(new Callback<LastFmModels.TopTracksResponse>() {
             @Override
@@ -76,11 +108,11 @@ public class TrendingFragment extends Fragment {
                     List<LastFmModels.TrackSimple> simpleTracks = response.body().getTracks().getTrackList();
                     totalTracksToFetch = simpleTracks.size();
                     tracksFetched = 0;
-                    completeTrackList.clear();
 
                     if (totalTracksToFetch == 0) {
                         progressBar.setVisibility(View.GONE);
                         // Tampilkan pesan "Tidak ada data" jika perlu
+                        return; // Keluar dari metode jika tidak ada lagu
                     }
 
                     for (LastFmModels.TrackSimple track : simpleTracks) {
@@ -88,7 +120,7 @@ public class TrendingFragment extends Fragment {
                     }
                 } else {
                     progressBar.setVisibility(View.GONE);
-                    Log.e(TAG, "Gagal mendapatkan Top Tracks. Kode: " + response.code());
+                    Log.e(TAG, "Gagal mendapatkan Top Tracks untuk tag: " + tag + ". Kode: " + response.code());
                 }
             }
 
@@ -100,6 +132,7 @@ public class TrendingFragment extends Fragment {
         });
     }
 
+    // Metode di bawah ini sudah benar, tidak perlu diubah.
     private void fetchTrackDetails(String artistName, String trackName) {
         Call<LastFmModels.TrackInfoResponse> call = apiService.getTrackInfo(API_KEY, artistName, trackName);
         call.enqueue(new Callback<LastFmModels.TrackInfoResponse>() {
@@ -108,14 +141,10 @@ public class TrendingFragment extends Fragment {
                 if (response.isSuccessful() && response.body() != null && response.body().getTrack() != null) {
                     completeTrackList.add(response.body().getTrack());
                 }
-
-                // Cek apakah semua data detail sudah terkumpul
                 checkIfAllDataFetched();
             }
-
             @Override
             public void onFailure(Call<LastFmModels.TrackInfoResponse> call, Throwable t) {
-                // Tetap panggil check, agar progress bar tidak stuck jika ada yg gagal
                 checkIfAllDataFetched();
                 Log.e(TAG, "Gagal mendapatkan detail untuk: " + trackName);
             }
@@ -124,14 +153,15 @@ public class TrendingFragment extends Fragment {
 
     private synchronized void checkIfAllDataFetched() {
         tracksFetched++;
-        if (tracksFetched == totalTracksToFetch) {
-            // Semua data sudah terkumpul, sekarang tampilkan!
-            getActivity().runOnUiThread(() -> {
-                progressBar.setVisibility(View.GONE);
-                recyclerView.setVisibility(View.VISIBLE);
-                trackAdapter.setTracks(completeTrackList);
-                Log.d(TAG, "Semua data berhasil dimuat dan ditampilkan.");
-            });
+        if (tracksFetched >= totalTracksToFetch) {
+            if (getActivity() != null) {
+                getActivity().runOnUiThread(() -> {
+                    progressBar.setVisibility(View.GONE);
+                    recyclerView.setVisibility(View.VISIBLE);
+                    trackAdapter.setTracks(completeTrackList);
+                    Log.d(TAG, "Semua data berhasil dimuat dan ditampilkan.");
+                });
+            }
         }
     }
 }
