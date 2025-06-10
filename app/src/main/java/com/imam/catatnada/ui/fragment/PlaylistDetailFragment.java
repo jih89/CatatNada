@@ -7,6 +7,7 @@ import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -27,15 +28,18 @@ import java.util.concurrent.Executors;
 public class PlaylistDetailFragment extends Fragment implements TrackAdapter.OnTrackDeleteListener {
 
     private RecyclerView recyclerView;
+    private TextView textViewEmptyPlaylist;
     private TrackAdapter adapter;
     private PlaylistDataSource dataSource;
     private long playlistId;
+    private String playlistName;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
             playlistId = getArguments().getLong("playlistId");
+            playlistName = getArguments().getString("playlistName");
         }
     }
 
@@ -49,6 +53,7 @@ public class PlaylistDetailFragment extends Fragment implements TrackAdapter.OnT
         super.onViewCreated(view, savedInstanceState);
 
         recyclerView = view.findViewById(R.id.recyclerViewPlaylistTracks);
+        textViewEmptyPlaylist = view.findViewById(R.id.textViewEmptyPlaylist);
         adapter = new TrackAdapter();
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
@@ -70,7 +75,14 @@ public class PlaylistDetailFragment extends Fragment implements TrackAdapter.OnT
             dataSource.close();
 
             handler.post(() -> {
-                adapter.setTracks(tracksFromDb, "playlistDetail");
+                if (tracksFromDb.isEmpty()) {
+                    recyclerView.setVisibility(View.GONE);
+                    textViewEmptyPlaylist.setVisibility(View.VISIBLE);
+                } else {
+                    recyclerView.setVisibility(View.VISIBLE);
+                    textViewEmptyPlaylist.setVisibility(View.GONE);
+                    adapter.setTracks(tracksFromDb, "playlistDetail");
+                }
             });
         });
     }

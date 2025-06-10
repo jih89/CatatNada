@@ -124,10 +124,21 @@ public class TrackDetailActivity extends AppCompatActivity {
             textViewAlbumName.setText(track.getAlbum().getTitle());
             if (track.getAlbum().getImage() != null && !track.getAlbum().getImage().isEmpty()) {
                 String imageUrl = track.getAlbum().getImage().get(track.getAlbum().getImage().size() - 1).getUrl();
-                Glide.with(this).load(imageUrl).placeholder(R.drawable.ic_launcher_foreground).error(R.drawable.ic_launcher_foreground).into(imageViewDetailArt);
+                Glide.with(this)
+                    .load(imageUrl)
+                    .placeholder(R.drawable.placeholder_image)
+                    .error(R.drawable.placeholder_image)
+                    .into(imageViewDetailArt);
+            } else {
+                Glide.with(this)
+                    .load(R.drawable.placeholder_image)
+                    .into(imageViewDetailArt);
             }
         } else {
             textViewAlbumName.setText("N/A");
+            Glide.with(this)
+                .load(R.drawable.placeholder_image)
+                .into(imageViewDetailArt);
         }
 
         if (track.getWiki() != null && track.getWiki().getSummary() != null) {

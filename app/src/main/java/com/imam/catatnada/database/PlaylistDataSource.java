@@ -45,12 +45,12 @@ public class PlaylistDataSource {
     public long createPlaylist(String name) {
         ContentValues values = new ContentValues();
         values.put(DatabaseContract.PlaylistColumns.COLUMN_NAME, name);
+        values.put(DatabaseContract.PlaylistColumns.COLUMN_CREATION_DATE, System.currentTimeMillis());
         return database.insert(DatabaseContract.PlaylistColumns.TABLE_NAME, null, values);
     }
 
     public ArrayList<Playlist> getAllPlaylists() {
         ArrayList<Playlist> playlists = new ArrayList<>();
-        // Menggunakan pola MappingHelper dari PDF secara langsung
         Cursor cursor = database.query(
                 DatabaseContract.PlaylistColumns.TABLE_NAME,
                 null, null, null, null, null,
@@ -61,7 +61,8 @@ public class PlaylistDataSource {
             do {
                 long id = cursor.getLong(cursor.getColumnIndexOrThrow(DatabaseContract.PlaylistColumns._ID));
                 String name = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseContract.PlaylistColumns.COLUMN_NAME));
-                playlists.add(new Playlist(id, name));
+                long creationDate = cursor.getLong(cursor.getColumnIndexOrThrow(DatabaseContract.PlaylistColumns.COLUMN_CREATION_DATE));
+                playlists.add(new Playlist(id, name, creationDate));
             } while (cursor.moveToNext());
         }
         cursor.close();

@@ -124,7 +124,19 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackViewHol
             } else {
                 textViewTrackNumber.setVisibility(View.GONE);
             }
-            Glide.with(itemView.getContext()).load(imageUrl).placeholder(R.drawable.ic_launcher_foreground).error(R.drawable.ic_launcher_foreground).into(imageViewAlbumArt);
+
+            // Load image with proper placeholder
+            if (imageUrl != null && !imageUrl.isEmpty()) {
+                Glide.with(itemView.getContext())
+                    .load(imageUrl)
+                    .placeholder(R.drawable.placeholder_image)
+                    .error(R.drawable.placeholder_image)
+                    .into(imageViewAlbumArt);
+            } else {
+                Glide.with(itemView.getContext())
+                    .load(R.drawable.placeholder_image)
+                    .into(imageViewAlbumArt);
+            }
 
             // --- Logika untuk Tombol Hapus ---
             if ("playlistDetail".equalsIgnoreCase(screenType) && item instanceof Track) {

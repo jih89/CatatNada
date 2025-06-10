@@ -9,6 +9,7 @@ public final class DatabaseContract {
     public static final class PlaylistColumns implements BaseColumns {
         public static final String TABLE_NAME = "playlists";
         public static final String COLUMN_NAME = "name";
+        public static final String COLUMN_CREATION_DATE = "creation_date";
     }
 
     public static final class TrackColumns implements BaseColumns {

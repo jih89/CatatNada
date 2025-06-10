@@ -5,16 +5,21 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
+    android:background="@color/background"
     tools:context=".ui.fragment.SearchFragment">
 
     <androidx.appcompat.widget.SearchView
         android:id="@+id/searchView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="8dp"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="8dp"
         android:background="@drawable/search_view_bg"
         app:iconifiedByDefault="false"
-        app:queryHint="Search for a song..." />
+        app:queryHint="Search for a song..."
+        app:iconTint="@color/on_surface_variant"
+        app:queryBackground="@android:color/transparent"/>
 
     <FrameLayout
         android:layout_width="match_parent"
@@ -25,6 +30,8 @@
             android:id="@+id/recyclerViewSearch"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingHorizontal="8dp"
             android:visibility="gone" />
 
         <ProgressBar
@@ -39,6 +46,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Search for your favorite songs."
+            android:textAppearance="@style/TextAppearance.CatatNada.BodyLarge"
+            android:textColor="@color/on_surface_variant"
             android:layout_gravity="center"
             android:visibility="visible"/>
 

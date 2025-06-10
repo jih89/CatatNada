@@ -11,4 +11,15 @@
         android:layout_height="match_parent"
         android:padding="8dp"/>
 
+    <TextView
+        android:id="@+id/textViewEmptyPlaylist"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:text="Playlist Empty"
+        android:textAppearance="@style/TextAppearance.CatatNada.BodyLarge"
+        android:textColor="@color/on_surface_variant"
+        android:visibility="gone"
+        tools:visibility="visible"/>
+
 </FrameLayout>
