@@ -22,7 +22,7 @@ import java.util.List;
 
 public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackViewHolder> {
 
-    // --- Bagian Listener untuk Delete ---
+    // Listener Delete
     public interface OnTrackDeleteListener {
         void onTrackDeleted(long trackId, String trackName);
     }
@@ -52,7 +52,6 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackViewHol
 
     @Override
     public void onBindViewHolder(@NonNull TrackViewHolder holder, int position) {
-        // Kirim objek dan listener ke ViewHolder
         holder.bind(itemList.get(position), position + 1, screenType, deleteListener);
     }
 
@@ -61,9 +60,8 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackViewHol
         return itemList.size();
     }
 
-    // --- ViewHolder Class ---
     static class TrackViewHolder extends RecyclerView.ViewHolder {
-        private final ImageButton buttonDeleteTrack; // Tombol hapus
+        private final ImageButton buttonDeleteTrack;
         private final TextView textViewTrackNumber;
         private final ImageView imageViewAlbumArt;
         private final TextView textViewTrackName;
@@ -72,7 +70,6 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackViewHol
 
         public TrackViewHolder(@NonNull View itemView) {
             super(itemView);
-            // Inisialisasi semua view, termasuk tombol hapus
             buttonDeleteTrack = itemView.findViewById(R.id.buttonDeleteTrack);
             textViewTrackNumber = itemView.findViewById(R.id.textViewTrackNumber);
             imageViewAlbumArt = itemView.findViewById(R.id.imageViewAlbumArt);
@@ -81,14 +78,12 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackViewHol
             textViewInfoLine = itemView.findViewById(R.id.textViewInfoLine);
         }
 
-        // Metode bind sekarang menerima listener sebagai parameter
         public void bind(Object item, int position, String screenType, OnTrackDeleteListener listener) {
             String trackName = "";
             String artistName = "";
             String imageUrl = null;
             String infoLine = "";
 
-            // --- Logika Ekstraksi Data ---
             if (item instanceof LastFmModels.TrackDetail) {
                 LastFmModels.TrackDetail apiTrack = (LastFmModels.TrackDetail) item;
                 trackName = apiTrack.getName();
@@ -108,16 +103,14 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackViewHol
                 trackName = dbTrack.getTrackName();
                 artistName = dbTrack.getArtistName();
                 imageUrl = dbTrack.getAlbumArtUrl();
-                infoLine = ""; // Kosongkan info line untuk item dari playlist
+                infoLine = "";
             }
 
-            // --- Tampilkan Data ke UI ---
             textViewTrackName.setText(trackName);
             textViewArtistName.setText(artistName);
             textViewInfoLine.setText(infoLine);
             textViewInfoLine.setVisibility(infoLine.isEmpty() ? View.GONE : View.VISIBLE);
 
-            // ... Logika nomor dan gambar ...
             if ("trending".equalsIgnoreCase(screenType)) {
                 textViewTrackNumber.setVisibility(View.VISIBLE);
                 textViewTrackNumber.setText(String.valueOf(position));
@@ -125,7 +118,6 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackViewHol
                 textViewTrackNumber.setVisibility(View.GONE);
             }
 
-            // Load image with proper placeholder
             if (imageUrl != null && !imageUrl.isEmpty()) {
                 Glide.with(itemView.getContext())
                     .load(imageUrl)
@@ -138,7 +130,7 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackViewHol
                     .into(imageViewAlbumArt);
             }
 
-            // --- Logika untuk Tombol Hapus ---
+            // Logika untuk Tombol Hapus
             if ("playlistDetail".equalsIgnoreCase(screenType) && item instanceof Track) {
                 buttonDeleteTrack.setVisibility(View.VISIBLE);
                 final Track trackToDelete = (Track) item;
@@ -152,7 +144,7 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackViewHol
                 buttonDeleteTrack.setVisibility(View.GONE);
             }
 
-            // --- Logika OnClickListener Universal untuk membuka detail ---
+            // OnClickListener Universal untuk membuka detail
             final String finalTrackName = trackName;
             final String finalArtistName = artistName;
             itemView.setOnClickListener(v -> {

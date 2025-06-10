@@ -27,9 +27,7 @@ import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-// BARU: Implementasikan interface dari adapter
 public class PlaylistsFragment extends Fragment implements PlaylistAdapter.OnPlaylistActionClickListener {
-
     private RecyclerView recyclerView;
     private PlaylistAdapter adapter;
     private TextView textViewNoPlaylists;
@@ -51,7 +49,6 @@ public class PlaylistsFragment extends Fragment implements PlaylistAdapter.OnPla
         dataSource = PlaylistDataSource.getInstance(requireContext());
 
         adapter = new PlaylistAdapter();
-        // BARU: Daftarkan fragment ini sebagai listener untuk aksi update/delete
         adapter.setOnPlaylistActionClickListener(this);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         recyclerView.setAdapter(adapter);
@@ -66,7 +63,6 @@ public class PlaylistsFragment extends Fragment implements PlaylistAdapter.OnPla
     }
 
     private void loadPlaylistsAsync() {
-        // Metode ini sudah benar, tidak perlu diubah
         ExecutorService executor = Executors.newSingleThreadExecutor();
         Handler handler = new Handler(Looper.getMainLooper());
 
@@ -88,7 +84,6 @@ public class PlaylistsFragment extends Fragment implements PlaylistAdapter.OnPla
     }
 
     private void showAddPlaylistDialog() {
-        // Metode ini sudah benar, tidak perlu diubah
         LayoutInflater inflater = requireActivity().getLayoutInflater();
         View dialogView = inflater.inflate(R.layout.dialog_add_playlist, null);
         final EditText editTextPlaylistName = dialogView.findViewById(R.id.editTextPlaylistName);
@@ -109,7 +104,6 @@ public class PlaylistsFragment extends Fragment implements PlaylistAdapter.OnPla
     }
 
     private void saveNewPlaylist(String name) {
-        // Metode ini sudah benar, tidak perlu diubah
         ExecutorService executor = Executors.newSingleThreadExecutor();
         Handler handler = new Handler(Looper.getMainLooper());
 
@@ -129,11 +123,8 @@ public class PlaylistsFragment extends Fragment implements PlaylistAdapter.OnPla
         });
     }
 
-    // --- BARU: Implementasi metode dari interface OnPlaylistActionClickListener ---
-
     @Override
-    public void onUpdateClicked(Playlist playlist) {
-        // Metode ini dipanggil dari adapter saat pengguna memilih "Edit Nama"
+    public void onUpdateClicked(Playlist playlist) { // Metode ini dipanggil dari adapter saat memilih "Edit Nama"
         LayoutInflater inflater = requireActivity().getLayoutInflater();
         View dialogView = inflater.inflate(R.layout.dialog_add_playlist, null);
         final EditText editTextPlaylistName = dialogView.findViewById(R.id.editTextPlaylistName);
@@ -153,8 +144,7 @@ public class PlaylistsFragment extends Fragment implements PlaylistAdapter.OnPla
     }
 
     @Override
-    public void onDeleteClicked(Playlist playlist) {
-        // Metode ini dipanggil dari adapter saat pengguna memilih "Hapus Playlist"
+    public void onDeleteClicked(Playlist playlist) { // Metode ini dipanggil dari adapter saat memilih "Hapus Playlist"
         new AlertDialog.Builder(requireContext())
                 .setTitle("Delete Playlist")
                 .setMessage("Are you sure you want to delete '" + playlist.getName() + "'?")
@@ -164,8 +154,6 @@ public class PlaylistsFragment extends Fragment implements PlaylistAdapter.OnPla
                 .setNegativeButton("Cancel", null)
                 .show();
     }
-
-    // --- BARU: Metode helper untuk menjalankan operasi update/delete di background ---
 
     private void updatePlaylistNameInDb(long playlistId, String newName) {
         ExecutorService executor = Executors.newSingleThreadExecutor();

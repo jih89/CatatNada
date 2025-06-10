@@ -46,8 +46,6 @@ public class TrackDetailActivity extends AppCompatActivity {
     private ChipGroup chipGroupTags;
     private Button buttonViewOnLastFm;
     private ApiService apiService;
-
-    // BARU: Variabel untuk database dan UI playlist
     private Button buttonSaveToPlaylist;
     private PlaylistDataSource dataSource;
     private LastFmModels.TrackDetail currentTrackDetail;
@@ -64,7 +62,6 @@ public class TrackDetailActivity extends AppCompatActivity {
 
         apiService = RetrofitClient.getClient().create(ApiService.class);
 
-        // BARU: Inisialisasi DataSource
         dataSource = PlaylistDataSource.getInstance(this);
 
         if (trackName != null && artistName != null) {
@@ -83,12 +80,10 @@ public class TrackDetailActivity extends AppCompatActivity {
         textViewSummary = findViewById(R.id.textViewDetailSummary);
         chipGroupTags = findViewById(R.id.chipGroupTags);
         buttonViewOnLastFm = findViewById(R.id.buttonViewOnLastFm);
-        // BARU: Inisialisasi tombol simpan
         buttonSaveToPlaylist = findViewById(R.id.buttonSaveToPlaylist);
     }
 
     private void fetchTrackDetails(String artistName, String trackName) {
-        // Ambil API Key dari BuildConfig untuk keamanan
         String apiKey = "a604b5b421465fe9e7be6f7f96edf595";
         Call<LastFmModels.TrackInfoResponse> call = apiService.getTrackInfo(apiKey, artistName, trackName);
 
@@ -112,14 +107,12 @@ public class TrackDetailActivity extends AppCompatActivity {
     }
 
     private void updateUi(LastFmModels.TrackDetail track) {
-        // BARU: Simpan info track saat ini ke variabel global agar bisa diakses nanti
+        // Simpan info track saat ini ke variabel global agar bisa diakses nanti
         this.currentTrackDetail = track;
 
-        // Set data teks
         textViewTrackName.setText(track.getName());
         textViewArtistName.setText(track.getArtist().getName());
 
-        // ... (Sisa kode update UI Anda sudah benar semua)
         if (track.getAlbum() != null) {
             textViewAlbumName.setText(track.getAlbum().getTitle());
             if (track.getAlbum().getImage() != null && !track.getAlbum().getImage().isEmpty()) {
@@ -164,11 +157,9 @@ public class TrackDetailActivity extends AppCompatActivity {
             startActivity(browserIntent);
         });
 
-        // BARU: Set listener untuk tombol "Save to Playlist"
+        // Set listener untuk tombol "Save to Playlist"
         buttonSaveToPlaylist.setOnClickListener(v -> showPlaylistSelectionDialog());
     }
-
-    // --- BARU: Metode-metode untuk fungsionalitas playlist ---
 
     private void showPlaylistSelectionDialog() {
         ExecutorService executor = Executors.newSingleThreadExecutor();

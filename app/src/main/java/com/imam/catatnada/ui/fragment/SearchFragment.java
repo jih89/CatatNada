@@ -56,7 +56,6 @@ public class SearchFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // Inisialisasi Views
         searchView = view.findViewById(R.id.searchView);
         recyclerView = view.findViewById(R.id.recyclerViewSearch);
         progressBar = view.findViewById(R.id.progressBarSearch);
@@ -64,22 +63,18 @@ public class SearchFragment extends Fragment {
         layoutError = view.findViewById(R.id.layoutError);
         buttonRetry = view.findViewById(R.id.buttonRetry);
 
-        // Setup RecyclerView & Adapter
         trackAdapter = new TrackAdapter();
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         recyclerView.setAdapter(trackAdapter);
 
-        // Inisialisasi API Service
         apiService = RetrofitClient.getClient().create(ApiService.class);
 
-        // Setup listener untuk tombol Retry
         buttonRetry.setOnClickListener(v -> {
             if (!lastSearchQuery.isEmpty()) {
                 performSearch(lastSearchQuery);
             }
         });
 
-        // Setup Listener untuk SearchView
         setupSearchView();
     }
 
@@ -87,16 +82,14 @@ public class SearchFragment extends Fragment {
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
-                // Saat pengguna menekan tombol cari
                 if (!query.trim().isEmpty()) {
                     performSearch(query.trim());
                 }
-                return true; // Menandakan bahwa kita sudah menangani event ini
+                return true;
             }
 
             @Override
             public boolean onQueryTextChange(String newText) {
-                // Bisa diabaikan untuk sekarang
                 return false;
             }
         });
@@ -106,7 +99,6 @@ public class SearchFragment extends Fragment {
         // Simpan query terakhir untuk retry
         lastSearchQuery = query;
 
-        // Tampilkan loading, sembunyikan yang lain
         progressBar.setVisibility(View.VISIBLE);
         recyclerView.setVisibility(View.GONE);
         textViewInfo.setVisibility(View.GONE);
@@ -135,7 +127,6 @@ public class SearchFragment extends Fragment {
                         return;
                     }
 
-                    // Ambil detail untuk setiap hasil pencarian
                     for (LastFmModels.TrackSimpleSearch track : searchResults) {
                         fetchTrackDetails(track.getArtist(), track.getName());
                     }

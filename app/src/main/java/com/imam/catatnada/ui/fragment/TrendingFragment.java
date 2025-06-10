@@ -53,28 +53,21 @@ public class TrendingFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // Inisialisasi Views
         recyclerView = view.findViewById(R.id.recyclerViewTracks);
         progressBar = view.findViewById(R.id.progressBar);
         ChipGroup chipGroupGenre = view.findViewById(R.id.chipGroupGenre);
-        // BARU: Inisialisasi view untuk error
         layoutError = view.findViewById(R.id.layoutError);
         buttonRetry = view.findViewById(R.id.buttonRetry);
 
-        // Setup RecyclerView & Adapter
         trackAdapter = new TrackAdapter();
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         recyclerView.setAdapter(trackAdapter);
 
-        // Inisialisasi API Service
         apiService = RetrofitClient.getClient().create(ApiService.class);
 
-        // BARU: Setup listener untuk tombol Retry
         buttonRetry.setOnClickListener(v -> fetchTopTracksByTag(currentTag));
 
-        // Setup listener untuk ChipGroup
         chipGroupGenre.setOnCheckedChangeListener((group, checkedId) -> {
-            // BARU: Simpan tag yang dipilih ke variabel
             if (checkedId == R.id.chipGlobal) {
                 currentTag = "Global";
             } else if (checkedId == R.id.chipRock) {
@@ -87,19 +80,17 @@ public class TrendingFragment extends Fragment {
             fetchTopTracksByTag(currentTag);
         });
 
-        // Muat data awal untuk "Global"
+        // Muat data awal untuk Global
         if (savedInstanceState == null) {
             fetchTopTracksByTag(currentTag);
         }
     }
 
     private void fetchTopTracksByTag(String tag) {
-        // BARU: Saat fetch dimulai, sembunyikan semua UI lain
         progressBar.setVisibility(View.VISIBLE);
         recyclerView.setVisibility(View.GONE);
         layoutError.setVisibility(View.GONE);
 
-        // Kosongkan tampilan lama
         trackAdapter.setTracks(new ArrayList<>(), "trending");
         Log.d(TAG, "MEMULAI FETCH BARU untuk tag: " + tag);
 
@@ -119,7 +110,6 @@ public class TrendingFragment extends Fragment {
                         showErrorView();
                         return;
                     }
-                    // Fetch detail untuk setiap track
                     fetchAllDetails(simpleTracks);
                 } else {
                     Log.e(TAG, "Gagal mendapatkan Top Tracks. Kode: " + response.code());
@@ -202,7 +192,6 @@ public class TrendingFragment extends Fragment {
         }
     }
 
-    // BARU: Metode helper untuk menampilkan UI error
     private void showErrorView() {
         progressBar.setVisibility(View.GONE);
         recyclerView.setVisibility(View.GONE);

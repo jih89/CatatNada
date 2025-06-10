@@ -29,7 +29,6 @@ public class SettingsFragment extends Fragment {
 
         themeManager = new ThemeManager(requireContext());
 
-        // Inisialisasi Views
         MaterialCardView cardSystem = view.findViewById(R.id.card_system);
         MaterialCardView cardLight = view.findViewById(R.id.card_light);
         MaterialCardView cardDark = view.findViewById(R.id.card_dark);
@@ -37,10 +36,8 @@ public class SettingsFragment extends Fragment {
         checkLight = view.findViewById(R.id.check_light);
         checkDark = view.findViewById(R.id.check_dark);
 
-        // Update UI sesuai tema yang tersimpan
         updateCheckmark();
 
-        // Setup Click Listeners
         cardSystem.setOnClickListener(v -> selectTheme(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM));
         cardLight.setOnClickListener(v -> selectTheme(AppCompatDelegate.MODE_NIGHT_NO));
         cardDark.setOnClickListener(v -> selectTheme(AppCompatDelegate.MODE_NIGHT_YES));

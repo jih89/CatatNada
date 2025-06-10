@@ -86,7 +86,6 @@ public class LastFmModels {
         public String getName() { return name; }
     }
 
-    // == KELAS-KELAS UMUM ==
     public static class Artist {
         private String name;
         public String getName() { return name; }
@@ -100,7 +99,6 @@ public class LastFmModels {
         public String getSize() { return size; }
     }
 
-    // Model paling luar untuk hasil pencarian
     public static class SearchResultsResponse {
         private SearchResults results;
         public SearchResults getResults() { return results; }
@@ -117,9 +115,7 @@ public class LastFmModels {
         private List<TrackSimpleSearch> trackList;
         public List<TrackSimpleSearch> getTrackList() { return trackList; }
     }
-
-    // Model untuk satu lagu dari hasil pencarian
-    // Mirip dengan TrackSimple, tapi nama artis ada di field berbeda
+    // Model sederhana untuk hasil pencarian lagu
     public static class TrackSimpleSearch {
         private String name;
         private String artist; // Di sini nama artis langsung jadi string

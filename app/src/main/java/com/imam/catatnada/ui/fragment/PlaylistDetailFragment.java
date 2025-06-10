@@ -24,7 +24,6 @@ import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-// FIX #1: Implementasikan interface
 public class PlaylistDetailFragment extends Fragment implements TrackAdapter.OnTrackDeleteListener {
 
     private RecyclerView recyclerView;
@@ -57,7 +56,6 @@ public class PlaylistDetailFragment extends Fragment implements TrackAdapter.OnT
         adapter = new TrackAdapter();
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        // FIX #2: Set listener SEBELUM set adapter
         adapter.setOnTrackDeleteListener(this);
         recyclerView.setAdapter(adapter);
 
@@ -87,7 +85,6 @@ public class PlaylistDetailFragment extends Fragment implements TrackAdapter.OnT
         });
     }
 
-    // Metode ini sekarang wajib ada karena implementasi interface
     @Override
     public void onTrackDeleted(long trackId, String trackName) {
         new AlertDialog.Builder(requireContext())
